@@ -41,3 +41,20 @@ def add_book(request):
   serializer = BookSerializer(book)
   return JsonResponse({'books': serializer.data}, safe=False, status=status.HTTP_201_CREATED)
 
+@api_view(["PUT"])
+@csrf_exempt
+@permission_classes([IsAuthenticated])
+def update_book(request, book_id):
+    user = request.user.id
+    payload = json.loads(request.body)
+    try:
+        book_item = Book.objects.filter(added_by=user, id=book_id)
+        # returns 1 or 0
+        book_item.update(**payload)
+        book = Book.objects.get(id=book_id)
+        serializer = BookSerializer(book)
+        return JsonResponse({'book': serializer.data}, safe=False, status=status.HTTP_200_OK)
+    except ObjectDoesNotExist as e:
+      return JsonResponse({'error': str(e)}, safe=False, status=status.HTTP_404_NOT_FOUND)
+    except Exception:
+      return JsonResponse({'error': 'Something terrible went wrong'}, safe=False, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
